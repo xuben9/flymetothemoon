@@ -1,12 +1,14 @@
 package com.cho.fly.controller;
 
 import com.alibaba.fastjson.JSONArray;
+import com.cho.fly.service.MatrixToCoordinatesService;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,11 +18,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin
 @Controller
 public class WebController {
+
+    @Autowired
+    MatrixToCoordinatesService service;
 
     @RequestMapping(value = "/cho/bb", method = RequestMethod.POST)
     @ResponseBody
@@ -47,7 +54,10 @@ public class WebController {
                     System.out.println("--------第" + row + "行的数据如下--------");
                     ArrayList<Object> tmpList = new ArrayList<>();
                     for (int rol = 0; rol < maxRol; rol++) {
-                        tmpList.add(sheet.getRow(row).getCell(rol).toString());
+                        String s = sheet.getRow(row).getCell(rol).toString();
+                        // 转换成double
+                        double sDou = Double.parseDouble(s);
+                        tmpList.add(sDou);
                         System.out.print(sheet.getRow(row).getCell(rol).toString() + "  ");
                     }
                     matrix.add(tmpList);
@@ -65,7 +75,10 @@ public class WebController {
                     System.out.println("--------第" + row + "行的数据如下--------");
                     ArrayList<Object> tmpList = new ArrayList<>();
                     for (int rol = 0; rol < maxRol; rol++) {
-                        tmpList.add(sheet.getRow(row).getCell(rol).toString());
+                        String s = sheet.getRow(row).getCell(rol).toString();
+                        // 转换成double
+                        double sDou = Double.parseDouble(s);
+                        tmpList.add(sDou);
                         System.out.print(sheet.getRow(row).getCell(rol).toString() + "  ");
                     }
                     matrix.add(tmpList);
@@ -80,9 +93,10 @@ public class WebController {
                         if (null == strings) {
                             break;
                         }
-                        ArrayList<Object> tmpList = new ArrayList<>();
+                        List<Object> tmpList = new ArrayList<>();
                         for (String s : strings) {
-                            tmpList.add(s);
+                            double sDou = Double.parseDouble(s);
+                            tmpList.add(sDou);
                             System.out.print(s + " ");
                         }
                         matrix.add(tmpList);
@@ -104,22 +118,32 @@ public class WebController {
                     String[] row;
                     if (s.contains(",")) {
                         row = s.split(",");
-                    }else {
+
+                    } else {
                         row = s.split(" ");
                     }
-                    matrix.add(row);
+                    List<Object> tmpList = new ArrayList<>();
+                    for (String str : row) {
+                        double sDou = Double.parseDouble(str);
+                        tmpList.add(sDou);
+                    }
+                    matrix.add(tmpList);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         Object result = JSONArray.toJSON(matrix);
+        List coordinates = service.matrixToCoordinates(matrix);
+        Map<Object, Object> resultMap = new HashMap<>();
+        resultMap.put("matrix", matrix);
+        resultMap.put("coordinates", coordinates);
+        System.out.println(coordinates);
         System.out.println(result);
-        return result;
+        return resultMap;
     }
 
-    private File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException
-    {
+    private File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException {
         File file = new File("D:\\flymesky\\src\\main\\resources\\static\\temp.txt");
         multipart.transferTo(file);
         return file;
