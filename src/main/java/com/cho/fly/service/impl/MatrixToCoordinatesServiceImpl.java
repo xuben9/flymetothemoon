@@ -1,11 +1,15 @@
-
 package com.cho.fly.service.impl;
 
 import com.cho.fly.service.MatrixToCoordinatesService;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesService {
@@ -103,6 +107,81 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
         return coordinates;
     }
 
+    @Override
+    public String writeResultToFile(List result, String type) {
+
+        try {
+
+            String filePrefix = "";
+            if ("mtc".equals(type)) {
+                filePrefix = "coordinates";
+            } else if ("ctm".equals(type)) {
+                filePrefix = "matrix";
+            }
+            String filename = filePrefix + generateRandomFilename();
+            String pathname = "D:" + File.separator + "flymesky" + File.separator + "src" + File.separator + "main" + File.separator
+                    + "resources" + File.separator + "static" + File.separator + filename;
+            File file = new File(pathname);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileWriter fileWriter = new FileWriter(file);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            for (int i = 0; i < result.size(); i++) {
+                List tempRow = (List) result.get(i);
+                for (Object s : tempRow) {
+                    double tmp = (double) s;
+                    bufferedWriter.write(tmp + " ");
+                }
+//                String s = tempRow.get(0) + " " + tempRow.get(1);
+//                bufferedWriter.write(s);
+                bufferedWriter.newLine();
+            }
+            bufferedWriter.close();
+            return filename;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public List coordinatesToMatrix(List coordinates) {
+        List<Object> result = new ArrayList<>();
+        int dimension = coordinates.size();
+        for (int i = 0; i < dimension; i++) {
+            List<Object> tmpRow = new ArrayList<>();
+            List tmpCoordinate1 = (List) coordinates.get(i);
+            for (int j = 0; j < dimension; j++) {
+                double tmpElement = 0;
+                if (j < i) {
+                    List rowPre = (List) result.get(j);
+                    tmpElement = (double) rowPre.get(i);
+                } else if (j == i) {
+                    tmpElement = 0;
+                } else {
+                    List tmpCoordinate2 = (List) coordinates.get(j);
+                    tmpElement = calDistance(tmpCoordinate1, tmpCoordinate2);
+                }
+
+                tmpRow.add(tmpElement);
+            }
+            result.add(tmpRow);
+        }
+        return result;
+    }
+
+    private double calDistance(List tmpCoordinate1, List tmpCoordinate2) {
+        double x1 = (double) tmpCoordinate1.get(0);
+        double x2 = (double) tmpCoordinate2.get(0);
+        double y1 = (double) tmpCoordinate1.get(1);
+        double y2 = (double) tmpCoordinate2.get(1);
+        double distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        double ret = (double) Math.round(distance * 1000) / 1000;
+        return ret;
+    }
+
     private List<Double> checkCoordinateC(List<Double> coordinateCTmp, List<Double> coordinateCTmp2, List<Object> coordinates, List matrix, int i) {
         for (int j = 0; j < i; j++) {
             List tempRow = (List) matrix.get(j);
@@ -144,5 +223,12 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
         } else {
             return -1;
         }
+    }
+
+    //生成随机文件名
+    public String generateRandomFilename() {
+        String uuid = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 6);
+        String fileName = uuid + ".txt";
+        return fileName;
     }
 }

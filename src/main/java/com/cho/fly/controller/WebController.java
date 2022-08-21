@@ -10,12 +10,11 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +33,37 @@ public class WebController {
     public Object bb(MultipartFile file) {
 
 
+        List<Object> matrix = getObjects(file);
+        Object result = JSONArray.toJSON(matrix);
+        List coordinates = service.matrixToCoordinates(matrix);
+
+        // 20220812
+        String filename = service.writeResultToFile(coordinates,"mtc");
+
+        Map<Object, Object> resultMap = new HashMap<>();
+        resultMap.put("matrix", matrix);
+        resultMap.put("coordinates", coordinates);
+        resultMap.put("filename", filename);
+        System.out.println(coordinates);
+        System.out.println(result);
+        return resultMap;
+    }
+
+    @RequestMapping(value = "/cho/cc", method = RequestMethod.POST)
+    @ResponseBody
+    public Object cc(MultipartFile file) {
+        List<Object> coordinates = getObjects(file);
+        List matrix = service.coordinatesToMatrix(coordinates);
+        String filename = service.writeResultToFile(matrix,"ctm");
+        Map<Object, Object> resultMap = new HashMap<>();
+        resultMap.put("matrix", matrix);
+        resultMap.put("filename", filename);
+        System.out.println(coordinates);
+        System.out.println(matrix);
+        return resultMap;
+    }
+
+    private List<Object> getObjects(MultipartFile file) {
         final String XLSX = ".xlsx";
         final String XLS = ".xls";
         final String CSV = ".csv";
@@ -133,19 +163,71 @@ public class WebController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Object result = JSONArray.toJSON(matrix);
-        List coordinates = service.matrixToCoordinates(matrix);
-        Map<Object, Object> resultMap = new HashMap<>();
-        resultMap.put("matrix", matrix);
-        resultMap.put("coordinates", coordinates);
-        System.out.println(coordinates);
-        System.out.println(result);
-        return resultMap;
+        return matrix;
     }
 
     private File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException {
         File file = new File("D:\\flymesky\\src\\main\\resources\\static\\temp.txt");
         multipart.transferTo(file);
         return file;
+    }
+
+    @RequestMapping("/cho/downloadfile/{filename}")
+    @ResponseBody
+    public void downloadFile(@PathVariable String filename, HttpServletResponse response, HttpServletRequest request) {
+        String filepath = "D:" + File.separator + "flymesky" + File.separator + "src" + File.separator + "main" + File.separator
+                + "resources" + File.separator + "static" + File.separator + filename;
+        boolean is = myDownLoad(filepath, response);
+        if (is)
+            System.out.println("成功");
+        else
+            System.out.println("失败");
+    }
+
+    private boolean myDownLoad(String filepath, HttpServletResponse response) {
+        File f = new File(filepath);
+        if (!f.exists()) {
+            try {
+                response.sendError(404, "File not found!");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return false;
+        }
+
+        response.setContentType("application/force-download;charset=UTF-8");
+
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+
+            //获取要下载的文件输入流
+            in = new FileInputStream(filepath);
+            int len = 0;
+            //创建数据缓冲区
+            byte[] buffer = new byte[1024];
+            //通过response对象获取outputStream流
+            out = response.getOutputStream();
+            //将FileInputStream流写入到buffer缓冲区
+            while ((len = in.read(buffer)) > 0) {
+                //使用OutputStream将缓冲区的数据输出到浏览器
+                out.write(buffer, 0, len);
+            }
+            //这一步走完，将文件传入OutputStream中后，页面就会弹出下载框
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (out != null)
+                    out.close();
+                if (in != null)
+                    in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
     }
 }
