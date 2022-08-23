@@ -172,6 +172,49 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
         return result;
     }
 
+    @Override
+    public List rotateCoordinates(List coordinates, int degreeRotate) {
+        List<Object> result = new ArrayList<>();
+        double rotate = (degreeRotate / 180.0) * Math.PI;
+        for (Object tmpCo : coordinates) {
+            List coor = (List) tmpCo;
+            double x = Double.parseDouble(String.valueOf(coor.get(0)));
+            double y = Double.parseDouble(String.valueOf(coor.get(1)));
+            List<Object> coordinateEach = new ArrayList<>();
+            if (x == 0 && y == 0) {
+                coordinateEach.add(0);
+                coordinateEach.add(0);
+                result.add(coordinateEach);
+                continue;
+            }
+            double degreeX;
+            if (x > 0) {
+                double degreeTmp = Math.atan(y / x);
+                if (degreeTmp < 0) {
+                    degreeX = degreeTmp + 2 * Math.PI;
+                } else {
+                    degreeX = degreeTmp;
+                }
+            } else if (x < 0) {
+                degreeX = Math.atan(y / x) + Math.PI;
+            } else {
+                if (y > 0) {
+                    degreeX = Math.PI / 2;
+                } else {
+                    degreeX = 3 * Math.PI / 2;
+                }
+            }
+            double degreeResult = degreeX + rotate;
+            double distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+            double xResult = distance * Math.cos(degreeResult);
+            double yResult = distance * Math.sin(degreeResult);
+            coordinateEach.add(xResult);
+            coordinateEach.add(yResult);
+            result.add(coordinateEach);
+        }
+        return result;
+    }
+
     private double calDistance(List tmpCoordinate1, List tmpCoordinate2) {
         double x1 = (double) tmpCoordinate1.get(0);
         double x2 = (double) tmpCoordinate2.get(0);

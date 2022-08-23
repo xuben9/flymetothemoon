@@ -9,4 +9,6 @@ public interface MatrixToCoordinatesService {
     String writeResultToFile(List result, String type);
 
     List coordinatesToMatrix(List coordinates);
+
+    List rotateCoordinates(List coordinates, int degreeRotate);
 }

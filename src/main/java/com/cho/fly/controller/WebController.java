@@ -1,6 +1,7 @@
 package com.cho.fly.controller;
 
 import com.alibaba.fastjson.JSONArray;
+import com.cho.fly.entity.Params4Rotating;
 import com.cho.fly.service.MatrixToCoordinatesService;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
@@ -38,7 +39,7 @@ public class WebController {
         List coordinates = service.matrixToCoordinates(matrix);
 
         // 20220812
-        String filename = service.writeResultToFile(coordinates,"mtc");
+        String filename = service.writeResultToFile(coordinates, "mtc");
 
         Map<Object, Object> resultMap = new HashMap<>();
         resultMap.put("matrix", matrix);
@@ -54,12 +55,23 @@ public class WebController {
     public Object cc(MultipartFile file) {
         List<Object> coordinates = getObjects(file);
         List matrix = service.coordinatesToMatrix(coordinates);
-        String filename = service.writeResultToFile(matrix,"ctm");
+        String filename = service.writeResultToFile(matrix, "ctm");
         Map<Object, Object> resultMap = new HashMap<>();
         resultMap.put("matrix", matrix);
         resultMap.put("filename", filename);
         System.out.println(coordinates);
         System.out.println(matrix);
+        return resultMap;
+    }
+
+    @RequestMapping(value = "/cho/dd", method = RequestMethod.POST)
+    @ResponseBody
+    public Object dd(@RequestBody Params4Rotating params) {
+        List coordinates = params.getCoordinates();
+        int rotateDegree = params.getRotateDegree();
+        List result = service.rotateCoordinates(coordinates, rotateDegree);
+        Map<Object, Object> resultMap = new HashMap<>();
+        resultMap.put("coordinates", result);
         return resultMap;
     }
 
