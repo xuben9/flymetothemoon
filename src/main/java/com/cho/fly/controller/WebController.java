@@ -39,8 +39,12 @@ public class WebController {
         List coordinates = service.matrixToCoordinates(matrix);
 
         // 20220812
-        String filename = service.writeResultToFile(coordinates, "mtc");
-
+        String filename = service.writeResultToFile(coordinates,"mtc");
+        System.out.println(coordinates);
+        List<Object> origin = new ArrayList<>();
+        origin.add(0.0);
+        origin.add(0.0);
+        coordinates.add(origin);
         Map<Object, Object> resultMap = new HashMap<>();
         resultMap.put("matrix", matrix);
         resultMap.put("coordinates", coordinates);
@@ -55,7 +59,7 @@ public class WebController {
     public Object cc(MultipartFile file) {
         List<Object> coordinates = getObjects(file);
         List matrix = service.coordinatesToMatrix(coordinates);
-        String filename = service.writeResultToFile(matrix, "ctm");
+        String filename = service.writeResultToFile(matrix,"ctm");
         Map<Object, Object> resultMap = new HashMap<>();
         resultMap.put("matrix", matrix);
         resultMap.put("filename", filename);
@@ -69,7 +73,7 @@ public class WebController {
     public Object dd(@RequestBody Params4Rotating params) {
         List coordinates = params.getCoordinates();
         int rotateDegree = params.getRotateDegree();
-        List result = service.rotateCoordinates(coordinates, rotateDegree);
+        List result = service.rotateCoordinates(coordinates,rotateDegree);
         Map<Object, Object> resultMap = new HashMap<>();
         resultMap.put("coordinates", result);
         return resultMap;
@@ -157,6 +161,7 @@ public class WebController {
                         bufferedReader.close();
                         break;
                     }
+                    s = s.trim();
                     String[] row;
                     if (s.contains(",")) {
                         row = s.split(",");
