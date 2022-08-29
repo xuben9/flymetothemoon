@@ -17,10 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @CrossOrigin
 @Controller
@@ -34,7 +31,7 @@ public class WebController {
     public Object bb(MultipartFile file) {
 
 
-        List<Object> matrix = getObjects(file);
+        List<Object> matrix = getObjects(file,"mtc");
         Object result = JSONArray.toJSON(matrix);
         List coordinates = service.matrixToCoordinates(matrix);
 
@@ -57,7 +54,7 @@ public class WebController {
     @RequestMapping(value = "/cho/cc", method = RequestMethod.POST)
     @ResponseBody
     public Object cc(MultipartFile file) {
-        List<Object> coordinates = getObjects(file);
+        List<Object> coordinates = getObjects(file, "ctm");
         List matrix = service.coordinatesToMatrix(coordinates);
         String filename = service.writeResultToFile(matrix,"ctm");
         Map<Object, Object> resultMap = new HashMap<>();
@@ -79,7 +76,7 @@ public class WebController {
         return resultMap;
     }
 
-    private List<Object> getObjects(MultipartFile file) {
+    private List<Object> getObjects(MultipartFile file, String type) {
         final String XLSX = ".xlsx";
         final String XLS = ".xls";
         final String CSV = ".csv";
@@ -153,7 +150,7 @@ public class WebController {
                 }
             }
             if (fileName.endsWith(TXT)) {
-                File txtFile = multipartToFile(file);
+                File txtFile = multipartToFile(file, type);
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(txtFile));
                 while (true) {
                     String s = bufferedReader.readLine();
@@ -183,10 +180,16 @@ public class WebController {
         return matrix;
     }
 
-    private File multipartToFile(MultipartFile multipart) throws IllegalStateException, IOException {
-        File file = new File("D:\\flymesky\\src\\main\\resources\\static\\temp.txt");
-        multipart.transferTo(file);
-        return file;
+    private File multipartToFile(MultipartFile multipart, String type) throws IllegalStateException, IOException {
+        if ("mtc".equals(type)) {
+            File file = new File("D:\\cho\\flymetothemoon\\src\\main\\resources\\static\\temp.txt");
+            multipart.transferTo(file);
+            return file;
+        }else {
+            File file = new File("D:\\cho\\flymetothemoon\\src\\main\\resources\\static\\temp2.txt");
+            multipart.transferTo(file);
+            return file;
+        }
     }
 
     @RequestMapping("/cho/downloadfile/{filename}")
