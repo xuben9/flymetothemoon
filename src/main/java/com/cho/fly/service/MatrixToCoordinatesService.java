@@ -8,7 +8,7 @@ public interface MatrixToCoordinatesService {
 
     String writeResultToFile(List result, String type);
 
-    List coordinatesToMatrix(List coordinates);
+    List coordinatesToMatrix(List coordinates, String type);
 
     List rotateCoordinates(List coordinates, int degreeRotate);
 }

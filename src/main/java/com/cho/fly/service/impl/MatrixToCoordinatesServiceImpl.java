@@ -90,14 +90,14 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
             List<Double> coordinateCTmp2 = getCoordinateC(sideBot, angleCAX, AX, AY);
 
             if (i == 0) {
-                coordinateCTmp.set(0, (double) Math.round(coordinateCTmp.get(0) * 1000)/1000);
-                coordinateCTmp.set(1, (double) Math.round(coordinateCTmp.get(1) * 1000)/1000);
+                coordinateCTmp.set(0, (double) Math.round(coordinateCTmp.get(0) * 1000) / 1000);
+                coordinateCTmp.set(1, (double) Math.round(coordinateCTmp.get(1) * 1000) / 1000);
                 coordinates.add(coordinateCTmp);
             } else {
                 List<Double> coordinateC = checkCoordinateC(coordinateCTmp, coordinateCTmp2, coordinates, matrix, i);
                 // 坐标保留三位小数
-                coordinateC.set(0, (double) Math.round(coordinateC.get(0) * 1000)/1000);
-                coordinateC.set(1, (double) Math.round(coordinateC.get(1) * 1000)/1000);
+                coordinateC.set(0, (double) Math.round(coordinateC.get(0) * 1000) / 1000);
+                coordinateC.set(1, (double) Math.round(coordinateC.get(1) * 1000) / 1000);
                 coordinates.add(coordinateC);
             }
         }
@@ -116,18 +116,18 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
                 filePrefix = "matrix";
             }
             String filename = filePrefix + generateRandomFilename();
-            String pathname = "D:"+ File.separator+"flymesky"+File.separator+"src"+ File.separator+ "main" +File.separator
-                    +"resources"+File.separator + "static"+File.separator + filename;
+            String pathname = "D:" + File.separator + "flymesky" + File.separator + "src" + File.separator + "main" + File.separator
+                    + "resources" + File.separator + "static" + File.separator + filename;
             File file = new File(pathname);
-            if(!file.exists()){
+            if (!file.exists()) {
                 file.createNewFile();
             }
             FileWriter fileWriter = new FileWriter(file);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             for (int i = 0; i < result.size(); i++) {
                 List tempRow = (List) result.get(i);
-                for (Object s: tempRow) {
-                    double tmp = (double) s;
+                for (Object s : tempRow) {
+                    double tmp = Double.parseDouble(String.valueOf(s));
                     bufferedWriter.write(tmp + " ");
                 }
 //                String s = tempRow.get(0) + " " + tempRow.get(1);
@@ -144,7 +144,7 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
     }
 
     @Override
-    public List coordinatesToMatrix(List coordinates) {
+    public List coordinatesToMatrix(List coordinates, String type) {
         List<Object> result = new ArrayList<>();
         int dimension = coordinates.size();
         for (int i = 0; i < dimension; i++) {
@@ -155,11 +155,11 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
                 if (j < i) {
                     List rowPre = (List) result.get(j);
                     tmpElement = (double) rowPre.get(i);
-                }else if (j == i) {
+                } else if (j == i) {
                     tmpElement = 0;
-                }else {
+                } else {
                     List tmpCoordinate2 = (List) coordinates.get(j);
-                    tmpElement = calDistance(tmpCoordinate1, tmpCoordinate2);
+                    tmpElement = calDistance(tmpCoordinate1, tmpCoordinate2, type);
                 }
 
                 tmpRow.add(tmpElement);
@@ -172,8 +172,8 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
     @Override
     public List rotateCoordinates(List coordinates, int degreeRotate) {
         List<Object> result = new ArrayList<>();
-        double rotate = (degreeRotate/180.0)*Math.PI;
-        for (Object tmpCo:coordinates) {
+        double rotate = (degreeRotate / 180.0) * Math.PI;
+        for (Object tmpCo : coordinates) {
             List coor = (List) tmpCo;
             double x = Double.parseDouble(String.valueOf(coor.get(0)));
             double y = Double.parseDouble(String.valueOf(coor.get(1)));
@@ -185,20 +185,20 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
                 continue;
             }
             double degreeX;
-            if (x>0) {
-                double degreeTmp = Math.atan(y/x);
+            if (x > 0) {
+                double degreeTmp = Math.atan(y / x);
                 if (degreeTmp < 0) {
-                    degreeX = degreeTmp + 2*Math.PI;
-                }else {
+                    degreeX = degreeTmp + 2 * Math.PI;
+                } else {
                     degreeX = degreeTmp;
                 }
             } else if (x < 0) {
-                degreeX = Math.atan(y/x) + Math.PI;
+                degreeX = Math.atan(y / x) + Math.PI;
             } else {
                 if (y > 0) {
-                    degreeX = Math.PI/2;
-                }else {
-                    degreeX = 3*Math.PI/2;
+                    degreeX = Math.PI / 2;
+                } else {
+                    degreeX = 3 * Math.PI / 2;
                 }
             }
             double degreeResult = degreeX + rotate;
@@ -212,13 +212,20 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
         return result;
     }
 
-    private double calDistance(List tmpCoordinate1, List tmpCoordinate2) {
+    private double calDistance(List tmpCoordinate1, List tmpCoordinate2, String type) {
         double x1 = (double) tmpCoordinate1.get(0);
         double x2 = (double) tmpCoordinate2.get(0);
         double y1 = (double) tmpCoordinate1.get(1);
         double y2 = (double) tmpCoordinate2.get(1);
-        double distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-        double ret = (double) Math.round(distance * 1000)/1000;
+        double distance = 0.0;
+        final double R = 6371.0;
+        if ("pctm".equals(type)) {
+            distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        } else if ("mctm".equals(type)) {
+            //D=R*arcos [cos (Y1)*cos (Y2)*cos (X1-X2)+sin (Y1)*sin (Y2)]
+            distance = R * Math.acos(Math.cos(y1) * Math.cos(y2) * Math.cos(x1 - x2) + Math.sin(y1) * Math.sin(y2));
+        }
+        double ret = (double) Math.round(distance * 1000) / 1000;
         return ret;
     }
 
@@ -231,15 +238,15 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
             Double tempX = tempCoordinate.get(0);
             Double tempY = tempCoordinate.get(1);
 
-            double s0 = Math.pow(Math.abs(coordinateCTmp.get(0) - tempX),2) + Math.pow(Math.abs(coordinateCTmp.get(1) - tempY),2);
-            double s1 = Math.pow(Math.abs(coordinateCTmp2.get(0) - tempX),2) + Math.pow(Math.abs(coordinateCTmp2.get(1) - tempY),2);
+            double s0 = Math.pow(Math.abs(coordinateCTmp.get(0) - tempX), 2) + Math.pow(Math.abs(coordinateCTmp.get(1) - tempY), 2);
+            double s1 = Math.pow(Math.abs(coordinateCTmp2.get(0) - tempX), 2) + Math.pow(Math.abs(coordinateCTmp2.get(1) - tempY), 2);
 
-            double absS0 = Math.abs(Math.pow(tempLen,2) - s0);
-            double absS1 = Math.abs(Math.pow(tempLen,2) - s1);
+            double absS0 = Math.abs(Math.pow(tempLen, 2) - s0);
+            double absS1 = Math.abs(Math.pow(tempLen, 2) - s1);
 
             if (absS0 < absS1) {
                 return coordinateCTmp;
-            }else if (absS0 > absS1) {
+            } else if (absS0 > absS1) {
                 return coordinateCTmp2;
             }
         }
@@ -266,8 +273,8 @@ public class MatrixToCoordinatesServiceImpl implements MatrixToCoordinatesServic
     }
 
     //生成随机文件名
-    public String generateRandomFilename(){
-        String uuid = UUID.randomUUID().toString().replaceAll("-","").substring(0,6);
+    public String generateRandomFilename() {
+        String uuid = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 6);
         String fileName = uuid + ".txt";
         return fileName;
     }

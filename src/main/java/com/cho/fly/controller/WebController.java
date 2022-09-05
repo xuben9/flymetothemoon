@@ -55,7 +55,7 @@ public class WebController {
     @ResponseBody
     public Object cc(MultipartFile file) {
         List<Object> coordinates = getObjects(file, "ctm");
-        List matrix = service.coordinatesToMatrix(coordinates);
+        List matrix = service.coordinatesToMatrix(coordinates, "pctm");
         String filename = service.writeResultToFile(matrix,"ctm");
         Map<Object, Object> resultMap = new HashMap<>();
         resultMap.put("matrix", matrix);
@@ -70,9 +70,38 @@ public class WebController {
     public Object dd(@RequestBody Params4Rotating params) {
         List coordinates = params.getCoordinates();
         int rotateDegree = params.getRotateDegree();
+        System.out.println(coordinates);
         List result = service.rotateCoordinates(coordinates,rotateDegree);
+        System.out.println(result);
         Map<Object, Object> resultMap = new HashMap<>();
         resultMap.put("coordinates", result);
+        return resultMap;
+    }
+
+    @RequestMapping(value = "/cho/ff", method = RequestMethod.POST)
+    @ResponseBody
+    public Object ff(@RequestBody Params4Rotating params) {
+        List coordinates = params.getCoordinates();
+        System.out.println(coordinates);
+        coordinates.remove(coordinates.size()-1);
+        System.out.println(coordinates);
+        String filename = service.writeResultToFile(coordinates,"mtc");
+        Map<Object, Object> resultMap = new HashMap<>();
+        resultMap.put("filenameRotate", filename);
+        return resultMap;
+    }
+
+    @RequestMapping(value = "/cho/ee", method = RequestMethod.POST)
+    @ResponseBody
+    public Object ee(MultipartFile file) {
+        List<Object> coordinates = getObjects(file, "ctm");
+        List matrix = service.coordinatesToMatrix(coordinates, "mctm");
+        String filename = service.writeResultToFile(matrix,"ctm");
+        Map<Object, Object> resultMap = new HashMap<>();
+        resultMap.put("matrix", matrix);
+        resultMap.put("filename", filename);
+        System.out.println(coordinates);
+        System.out.println(matrix);
         return resultMap;
     }
 
@@ -182,11 +211,11 @@ public class WebController {
 
     private File multipartToFile(MultipartFile multipart, String type) throws IllegalStateException, IOException {
         if ("mtc".equals(type)) {
-            File file = new File("D:\\cho\\flymetothemoon\\src\\main\\resources\\static\\temp.txt");
+            File file = new File("D:\\flymesky\\src\\main\\resources\\static\\temp.txt");
             multipart.transferTo(file);
             return file;
         }else {
-            File file = new File("D:\\cho\\flymetothemoon\\src\\main\\resources\\static\\temp2.txt");
+            File file = new File("D:\\flymesky\\src\\main\\resources\\static\\temp2.txt");
             multipart.transferTo(file);
             return file;
         }
